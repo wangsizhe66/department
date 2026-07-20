@@ -18,7 +18,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-header">📋 部门简称排序助手</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">基于 Qwen3.7-Max · 自动匹配二级正部门并排序</div>', unsafe_allow_html=True)
 
 cache_mgr = CacheManager()
 
