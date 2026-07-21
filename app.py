@@ -60,23 +60,24 @@ if df is None:
     st.warning("⚠️ 请先在左侧上传表格")
     st.stop()
 
-# 筛选二级正
-df_filtered = df[df['部门定位'] == '二级正'].copy()
-if df_filtered.empty:
-    st.warning("⚠️ 当前表格中没有部门定位为'二级正'的部门，无法排序")
-    st.stop()
+# 统计信息（含二级正/副数量）
+total = len(df)
+dept_pos_counts = df['部门定位'].value_counts()
+cnt_zheng = dept_pos_counts.get('二级正', 0)
+cnt_fu = dept_pos_counts.get('二级副', 0)
 
-# 显示表格概况
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.metric("📊 总部门数", len(df))
+    st.metric("📊 总部门数", total)
 with col2:
-    st.metric("🎯 二级正部门", len(df_filtered))
+    st.metric("🎯 二级正", cnt_zheng)
 with col3:
-    st.metric("📌 唯一简称数", df_filtered['部门简称'].nunique())
+    st.metric("🔹 二级副", cnt_fu)
+with col4:
+    st.metric("📌 唯一简称数", df['部门简称'].nunique())
 
-with st.expander("📋 预览二级正部门数据", expanded=False):
-    st.dataframe(df_filtered, use_container_width=True)
+with st.expander("📋 预览全部部门数据", expanded=False):
+    st.dataframe(df, use_container_width=True)
 
 # ---------- 输入区 ----------
 st.markdown("---")
@@ -105,17 +106,27 @@ if run_btn:
         else:
             with st.spinner("🤖 正在调用模型匹配（首次查询可能需要几秒）..."):
                 try:
-                    result = get_sorted_short_names(df_filtered, inputs, cache_mgr)
+                    result = get_sorted_short_names(df, inputs, cache_mgr)
                 except Exception as e:
                     st.error(f"模型调用失败：{e}")
                     st.stop()
 
             st.markdown("---")
-            if not result:
+            output_list = result.get("output_list", [])
+            details = result.get("details", [])
+            if not output_list:
                 st.warning("❌ 未匹配到任何二级正部门，请检查输入名称是否准确")
             else:
-                st.success(f"✅ 匹配成功！共 {len(result)} 个部门（按序号升序）")
-                # 输出为可复制的纯文本（每行一个简称）
-                output_text = "、".join(result)
+                st.success(f"✅ 匹配成功！共 {len(output_list)} 个部门（按序号升序）")
+                output_text = "、".join(output_list)
                 st.code(output_text, language="text", line_numbers=False)
                 st.caption("💡 点击代码块右上角的复制按钮即可复制全部简称")
+
+                # 显示匹配详情
+                st.subheader("📝 匹配详情")
+                if details:
+                    df_details = pd.DataFrame(details)
+                    show_cols = ['原始输入', '匹配状态', '匹配部门名称', '匹配部门简称', '部门定位', '纠正类型', '输出简称']
+                    # 保证列存在
+                    df_show = df_details[show_cols]
+                    st.dataframe(df_show, use_container_width=True)
