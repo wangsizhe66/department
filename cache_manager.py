@@ -3,7 +3,7 @@ import hashlib
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import config
 
 
@@ -39,12 +39,12 @@ class CacheManager:
         with open(self.query_cache_path, "w", encoding="utf-8") as f:
             json.dump(cache, f, ensure_ascii=False, indent=2)
 
-    def get_query_result(self, inputs: List[str], table_hash: str) -> Optional[List[str]]:
+    def get_query_result(self, inputs: List[str], table_hash: str) -> Optional[Dict[str, Any]]:
         key = self._compute_key(inputs, table_hash)
         cache = self._load_query_cache()
         return cache.get(key)
 
-    def save_query_result(self, inputs: List[str], table_hash: str, result: List[str]) -> None:
+    def save_query_result(self, inputs: List[str], table_hash: str, result: Dict[str, Any]) -> None:
         key = self._compute_key(inputs, table_hash)
         cache = self._load_query_cache()
         cache[key] = result
